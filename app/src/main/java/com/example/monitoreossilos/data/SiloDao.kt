@@ -22,32 +22,32 @@ interface SiloDao {
     suspend fun contarSilos(): Int
 
     @Insert(onConflict = OnConflictStrategy.REPLACE)
-    suspend fun insertOrUpdateSilo(silo: SiloEntity)
+    suspend fun insertOrUpdateSilo(silo: SiloEntity): Long
 
     @Insert(onConflict = OnConflictStrategy.REPLACE)
-    suspend fun insertAllSilos(silos: List<SiloEntity>)
+    suspend fun insertAllSilos(silos: List<SiloEntity>): List<Long>
 
     @Query("UPDATE silos SET fotoUri = :uri WHERE idSilo = :id")
-    suspend fun actualizarFoto(id: String, uri: String)
+    suspend fun actualizarFoto(id: String, uri: String): Int
 
     @Query("SELECT * FROM movimientos WHERE idSilo = :id ORDER BY fecha DESC")
     fun observarMovimientos(id: String): Flow<List<MovimientoEntity>>
 
     @Insert
-    suspend fun insertMovimiento(movimiento: MovimientoEntity)
+    suspend fun insertMovimiento(movimiento: MovimientoEntity): Long
 
     @Query("DELETE FROM movimientos")
-    suspend fun borrarMovimientos()
+    suspend fun borrarMovimientos(): Int
 
     @Query("SELECT * FROM mediciones WHERE idSilo = :id ORDER BY fecha DESC")
     fun observarMediciones(id: String): Flow<List<MedicionEntity>>
 
     @Insert
-    suspend fun insertMedicion(medicion: MedicionEntity)
+    suspend fun insertMedicion(medicion: MedicionEntity): Long
 
     @Insert
-    suspend fun insertAllMediciones(mediciones: List<MedicionEntity>)
+    suspend fun insertAllMediciones(mediciones: List<MedicionEntity>): List<Long>
 
     @Query("DELETE FROM mediciones")
-    suspend fun borrarMediciones()
+    suspend fun borrarMediciones(): Int
 }
