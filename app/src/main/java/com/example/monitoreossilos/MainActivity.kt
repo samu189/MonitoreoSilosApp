@@ -33,6 +33,7 @@ import androidx.navigation.navArgument
 import com.example.monitoreossilos.data.AppDatabase
 import com.example.monitoreossilos.data.SiloRepository
 
+import com.example.monitoreossilos.ui.SplashScreen
 import com.example.monitoreossilos.ui.SiloDetailScreen
 import com.example.monitoreossilos.ui.SiloFormScreen
 import com.example.monitoreossilos.ui.SiloListScreen
@@ -41,6 +42,8 @@ import com.example.monitoreossilos.ui.SiloViewModelFactory
 
 import com.example.monitoreossilos.ui.theme.MonitoreosSilosTheme
 import com.example.monitoreossilos.util.NotificationHelper
+
+import com.example.monitoreossilos.ui.LoginScreen
 
 class MainActivity : ComponentActivity() {
 
@@ -75,8 +78,8 @@ class MainActivity : ComponentActivity() {
 
                 // Navegación entre pantallas
                 AppNavigation(
-                    siloViewModel,
-                    notificationHelper
+                    viewModel = siloViewModel,
+                    notificationHelper = notificationHelper
                 )
             }
         }
@@ -94,16 +97,13 @@ private fun SolicitarPermisoNotificaciones() {
     ) { }
 
     LaunchedEffect(Unit) {
-
         if (
-            Build.VERSION.SDK_INT >=
-            Build.VERSION_CODES.TIRAMISU &&
+            Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU &&
             ContextCompat.checkSelfPermission(
                 context,
                 Manifest.permission.POST_NOTIFICATIONS
             ) != PackageManager.PERMISSION_GRANTED
         ) {
-
             launcher.launch(
                 Manifest.permission.POST_NOTIFICATIONS
             )
@@ -122,9 +122,7 @@ fun AppNavigation(
 
     // Convertir alertas críticas en notificaciones
     LaunchedEffect(viewModel, notificationHelper) {
-
         viewModel.alertas.collect { silo ->
-
             notificationHelper.enviarAlertaSiloCritico(
                 silo.idSilo,
                 silo.granjaNombre,
@@ -135,7 +133,9 @@ fun AppNavigation(
 
     NavHost(
         navController = navController,
-        startDestination = "lista",
+
+        // Iniciar con la pantalla de bienvenida
+        startDestination = "splash",
 
         // Animación al ingresar a una pantalla
         enterTransition = {
@@ -166,9 +166,38 @@ fun AppNavigation(
 
     ) {
 
+        // Pantalla 0: Bienvenida de SiloControl
+
+        composable("splash") {
+            SplashScreen(
+                onSplashFinished = {
+                    navController.navigate("login") {
+                        popUpTo("splash") {
+                            inclusive = true
+                        }
+                        launchSingleTop = true
+                    }
+                }
+            )
+        }
+
+        // Pantalla de inicio de sesión
+        composable("login") {
+            LoginScreen(
+                onLoginSuccess = {
+                    navController.navigate("lista") {
+                        popUpTo("login") {
+                            inclusive = true
+                        }
+                        launchSingleTop = true
+                    }
+                }
+            )
+        }
+
+
         // Pantalla 1: Listado de silos
         composable("lista") {
-
             SiloListScreen(
                 viewModel = viewModel,
 
@@ -184,7 +213,6 @@ fun AppNavigation(
 
         // Pantalla 2: Formulario para registrar silos
         composable("formulario") {
-
             SiloFormScreen(
                 viewModel = viewModel,
 
