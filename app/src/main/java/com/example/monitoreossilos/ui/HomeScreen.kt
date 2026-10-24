@@ -8,6 +8,7 @@ import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
+
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowForward
 import androidx.compose.material.icons.filled.Home
@@ -16,10 +17,13 @@ import androidx.compose.material.icons.filled.Notifications
 import androidx.compose.material.icons.filled.Person
 import androidx.compose.material.icons.filled.Warning
 import androidx.compose.material.icons.filled.Warehouse
+
 import androidx.compose.material3.*
+
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -31,6 +35,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+
 import com.example.monitoreossilos.ui.theme.AzulPrincipal
 
 private val AzulFuerte = Color(0xFF0864AD)
@@ -42,23 +47,28 @@ fun HomeScreen(
     viewModel: SiloViewModel,
     onVerSilosClick: () -> Unit,
     onAlertasClick: () -> Unit,
-    onGranjaClick: (String) -> Unit
+    onGranjaClick: (String) -> Unit,
+    onVerGranjasClick: () -> Unit
 ) {
     val silos by viewModel.silos.collectAsState()
 
+    // Obtener las granjas registradas en Room
     val granjas = silos
         .map { it.granjaNombre }
         .distinct()
         .sorted()
 
+    // Cantidad de silos en advertencia
     val advertencias = silos.count {
         it.porcentajeDisponible.toDouble() in 20.0..30.0
     }
 
+    // Cantidad de silos críticos
     val criticos = silos.count {
         it.porcentajeDisponible.toDouble() < 20.0
     }
 
+    // Nivel promedio de alimento
     val promedio = if (silos.isEmpty()) {
         0
     } else {
@@ -70,6 +80,7 @@ fun HomeScreen(
     Scaffold(
         containerColor = Fondo,
 
+        // Encabezado azul de SiloControl
         topBar = {
             Row(
                 modifier = Modifier
@@ -77,11 +88,12 @@ fun HomeScreen(
                     .background(AzulFuerte)
                     .height(62.dp)
                     .padding(horizontal = 18.dp),
+
                 verticalAlignment = Alignment.CenterVertically,
                 horizontalArrangement = Arrangement.SpaceBetween
             ) {
                 Icon(
-                    Icons.Default.Menu,
+                    imageVector = Icons.Default.Menu,
                     contentDescription = "Menú decorativo",
                     tint = Color.White
                 )
@@ -97,7 +109,7 @@ fun HomeScreen(
                     onClick = onAlertasClick
                 ) {
                     Icon(
-                        Icons.Default.Notifications,
+                        imageVector = Icons.Default.Notifications,
                         contentDescription = "Ver alertas",
                         tint = Color.White
                     )
@@ -105,10 +117,13 @@ fun HomeScreen(
             }
         },
 
+        // Barra de navegación inferior
         bottomBar = {
             NavigationBar(
                 containerColor = Color.White
             ) {
+
+                // Inicio
                 NavigationBarItem(
                     selected = true,
                     onClick = {},
@@ -118,7 +133,9 @@ fun HomeScreen(
                             contentDescription = null
                         )
                     },
-                    label = { Text("Inicio") },
+                    label = {
+                        Text("Inicio")
+                    },
                     colors = NavigationBarItemDefaults.colors(
                         selectedIconColor = AzulPrincipal,
                         selectedTextColor = AzulPrincipal,
@@ -126,6 +143,7 @@ fun HomeScreen(
                     )
                 )
 
+                // Silos
                 NavigationBarItem(
                     selected = false,
                     onClick = onVerSilosClick,
@@ -135,9 +153,12 @@ fun HomeScreen(
                             contentDescription = null
                         )
                     },
-                    label = { Text("Silos") }
+                    label = {
+                        Text("Silos")
+                    }
                 )
 
+                // Alertas
                 NavigationBarItem(
                     selected = false,
                     onClick = onAlertasClick,
@@ -147,9 +168,12 @@ fun HomeScreen(
                             contentDescription = null
                         )
                     },
-                    label = { Text("Alertas") }
+                    label = {
+                        Text("Alertas")
+                    }
                 )
 
+                // Perfil pendiente de implementar
                 NavigationBarItem(
                     selected = false,
                     enabled = false,
@@ -160,25 +184,31 @@ fun HomeScreen(
                             contentDescription = null
                         )
                     },
-                    label = { Text("Perfil") }
+                    label = {
+                        Text("Perfil")
+                    }
                 )
             }
         }
+
     ) { padding ->
 
         LazyColumn(
             modifier = Modifier
                 .fillMaxSize()
                 .padding(padding),
+
             contentPadding = PaddingValues(
                 start = 16.dp,
                 end = 16.dp,
                 top = 20.dp,
                 bottom = 24.dp
             ),
+
             verticalArrangement = Arrangement.spacedBy(14.dp)
         ) {
 
+            // Mensaje de bienvenida
             item {
                 Column {
                     Text(
@@ -188,7 +218,9 @@ fun HomeScreen(
                         fontWeight = FontWeight.Bold
                     )
 
-                    Spacer(Modifier.height(5.dp))
+                    Spacer(
+                        modifier = Modifier.height(5.dp)
+                    )
 
                     Text(
                         text = "Aquí tienes el resumen de tus silos.",
@@ -198,19 +230,27 @@ fun HomeScreen(
                 }
             }
 
-            // Tarjetas Granjas y Silos
+            // Primera fila: Granjas y Silos
             item {
                 Row(
+                    modifier = Modifier.fillMaxWidth(),
                     horizontalArrangement = Arrangement.spacedBy(10.dp)
                 ) {
+
+                    // Tarjeta Granjas - AHORA ES FUNCIONAL
                     TarjetaResumen(
                         titulo = "Granjas",
                         cantidad = granjas.size,
+
                         colores = listOf(
                             Color(0xFF0873D1),
                             Color(0xFF249CF0)
                         ),
+
                         modifier = Modifier.weight(1f),
+
+                        onClick = onVerGranjasClick,
+
                         icono = {
                             Icon(
                                 Icons.Default.Home,
@@ -220,14 +260,20 @@ fun HomeScreen(
                         }
                     )
 
+                    // Tarjeta Silos
                     TarjetaResumen(
                         titulo = "Silos",
                         cantidad = silos.size,
+
                         colores = listOf(
                             Color(0xFF249CF0),
                             Color(0xFF64B5F6)
                         ),
+
                         modifier = Modifier.weight(1f),
+
+                        onClick = onVerSilosClick,
+
                         icono = {
                             Icon(
                                 Icons.Default.Warehouse,
@@ -239,19 +285,26 @@ fun HomeScreen(
                 }
             }
 
-            // Tarjetas Advertencias y Criticos
+            // Segunda fila: Advertencias y Críticos
             item {
                 Row(
+                    modifier = Modifier.fillMaxWidth(),
                     horizontalArrangement = Arrangement.spacedBy(10.dp)
                 ) {
+
                     TarjetaResumen(
                         titulo = "Advertencias",
                         cantidad = advertencias,
+
                         colores = listOf(
                             Color(0xFFFB8C00),
                             Color(0xFFFFB300)
                         ),
+
                         modifier = Modifier.weight(1f),
+
+                        onClick = onAlertasClick,
+
                         icono = {
                             Icon(
                                 Icons.Default.Warning,
@@ -264,11 +317,16 @@ fun HomeScreen(
                     TarjetaResumen(
                         titulo = "Críticos",
                         cantidad = criticos,
+
                         colores = listOf(
                             Color(0xFFE53935),
                             Color(0xFFFF5252)
                         ),
+
                         modifier = Modifier.weight(1f),
+
+                        onClick = onAlertasClick,
+
                         icono = {
                             Icon(
                                 Icons.Default.Notifications,
@@ -280,20 +338,25 @@ fun HomeScreen(
                 }
             }
 
-            // Promedio circular
+            // Indicador circular del nivel promedio
             item {
                 Card(
                     colors = CardDefaults.cardColors(
                         containerColor = Color.White
                     ),
+
                     shape = RoundedCornerShape(16.dp),
+
                     modifier = Modifier.fillMaxWidth()
                 ) {
                     Row(
                         modifier = Modifier.padding(18.dp),
+
                         verticalAlignment = Alignment.CenterVertically,
+
                         horizontalArrangement = Arrangement.spacedBy(18.dp)
                     ) {
+
                         IndicadorCircular(
                             porcentaje = promedio,
                             modifier = Modifier.size(94.dp)
@@ -309,19 +372,27 @@ fun HomeScreen(
                                 fontSize = 15.sp
                             )
 
-                            Spacer(Modifier.height(12.dp))
+                            Spacer(
+                                modifier = Modifier.height(12.dp)
+                            )
 
                             LinearProgressIndicator(
-                                progress = { promedio / 100f },
+                                progress = {
+                                    promedio / 100f
+                                },
+
                                 modifier = Modifier
                                     .fillMaxWidth()
                                     .height(9.dp)
                                     .clip(RoundedCornerShape(10.dp)),
+
                                 color = AzulPrincipal,
                                 trackColor = Color(0xFFE0EBF2)
                             )
 
-                            Spacer(Modifier.height(7.dp))
+                            Spacer(
+                                modifier = Modifier.height(7.dp)
+                            )
 
                             Text(
                                 text = "$promedio% de llenado promedio",
@@ -333,18 +404,22 @@ fun HomeScreen(
                 }
             }
 
-            // Boton principal
+            // Botón para ver todos los silos
             item {
                 Button(
                     onClick = onVerSilosClick,
+
                     modifier = Modifier
                         .fillMaxWidth()
                         .height(50.dp),
+
                     shape = RoundedCornerShape(12.dp)
                 ) {
                     Text("Ver todos los silos")
 
-                    Spacer(Modifier.width(10.dp))
+                    Spacer(
+                        modifier = Modifier.width(10.dp)
+                    )
 
                     Icon(
                         Icons.AutoMirrored.Filled.ArrowForward,
@@ -353,19 +428,52 @@ fun HomeScreen(
                 }
             }
 
-            // Titulo de granjas
+            // Título de la sección de granjas
             item {
-                Text(
-                    text = "Mis granjas",
-                    fontSize = 20.sp,
-                    fontWeight = FontWeight.Bold,
-                    color = AzulTexto,
-                    modifier = Modifier.padding(top = 8.dp)
-                )
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(top = 8.dp),
+
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.SpaceBetween
+                ) {
+
+                    Text(
+                        text = "Mis granjas",
+                        fontSize = 20.sp,
+                        fontWeight = FontWeight.Bold,
+                        color = AzulTexto
+                    )
+
+                    // NUEVO: botón para abrir Mis Granjas
+                    TextButton(
+                        onClick = onVerGranjasClick
+                    ) {
+                        Text(
+                            text = "Ver todas",
+                            color = AzulPrincipal
+                        )
+
+                        Icon(
+                            imageVector =
+                                Icons.AutoMirrored.Filled.ArrowForward,
+
+                            contentDescription = null,
+
+                            tint = AzulPrincipal,
+
+                            modifier = Modifier.size(18.dp)
+                        )
+                    }
+                }
             }
 
-            // Tarjetas de granjas
-            items(granjas) { granja ->
+            // Listado de las granjas
+            items(
+                items = granjas,
+                key = { it }
+            ) { granja ->
 
                 val cantidad = silos.count {
                     it.granjaNombre == granja
@@ -373,9 +481,11 @@ fun HomeScreen(
 
                 Card(
                     shape = RoundedCornerShape(16.dp),
+
                     colors = CardDefaults.cardColors(
                         containerColor = Color.White
                     ),
+
                     modifier = Modifier
                         .fillMaxWidth()
                         .clickable {
@@ -386,24 +496,30 @@ fun HomeScreen(
                         modifier = Modifier
                             .fillMaxWidth()
                             .padding(16.dp),
+
                         verticalAlignment = Alignment.CenterVertically
                     ) {
+
+                        // Icono de la granja
                         Box(
                             modifier = Modifier
                                 .size(46.dp)
                                 .clip(RoundedCornerShape(12.dp))
                                 .background(Color(0xFFE3F2FD)),
+
                             contentAlignment = Alignment.Center
                         ) {
                             Icon(
-                                Icons.Default.Home,
+                                imageVector = Icons.Default.Home,
                                 contentDescription = null,
                                 tint = AzulPrincipal,
                                 modifier = Modifier.size(27.dp)
                             )
                         }
 
-                        Spacer(Modifier.width(13.dp))
+                        Spacer(
+                            modifier = Modifier.width(13.dp)
+                        )
 
                         Column(
                             modifier = Modifier.weight(1f)
@@ -423,8 +539,11 @@ fun HomeScreen(
                         }
 
                         Icon(
-                            Icons.AutoMirrored.Filled.ArrowForward,
+                            imageVector =
+                                Icons.AutoMirrored.Filled.ArrowForward,
+
                             contentDescription = "Ver silos de esta granja",
+
                             tint = AzulPrincipal
                         )
                     }
@@ -445,18 +564,29 @@ fun HomeScreen(
     }
 }
 
+// Tarjetas de resumen con degradado y clic opcional
 @Composable
 private fun TarjetaResumen(
     titulo: String,
     cantidad: Int,
     colores: List<Color>,
     modifier: Modifier = Modifier,
+    onClick: (() -> Unit)? = null,
     icono: @Composable () -> Unit
 ) {
     Box(
         modifier = modifier
             .height(120.dp)
             .clip(RoundedCornerShape(15.dp))
+            .then(
+                if (onClick != null) {
+                    Modifier.clickable {
+                        onClick()
+                    }
+                } else {
+                    Modifier
+                }
+            )
             .background(
                 Brush.horizontalGradient(colores)
             )
@@ -464,10 +594,12 @@ private fun TarjetaResumen(
     ) {
         Column(
             modifier = Modifier.fillMaxSize(),
+
             verticalArrangement = Arrangement.SpaceBetween
         ) {
             Row(
                 verticalAlignment = Alignment.CenterVertically,
+
                 horizontalArrangement = Arrangement.spacedBy(12.dp)
             ) {
                 icono()
@@ -490,6 +622,7 @@ private fun TarjetaResumen(
     }
 }
 
+// Indicador circular del nivel promedio
 @Composable
 private fun IndicadorCircular(
     porcentaje: Int,

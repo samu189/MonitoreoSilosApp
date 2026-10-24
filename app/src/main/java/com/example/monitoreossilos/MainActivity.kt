@@ -201,35 +201,34 @@ fun AppNavigation(
         }
 
         // PANTALLA 2: Menú principal
-        composable("inicio") {
 
+        composable("inicio") {
             HomeScreen(
                 viewModel = viewModel,
 
-                // Abrir todos los silos
                 onVerSilosClick = {
                     viewModel.onFiltroChange(null)
                     navController.navigate("lista")
                 },
 
-                // Abrir silos críticos
                 onAlertasClick = {
-                    viewModel.onFiltroChange(
-                        EstadoSilo.CRITICO
-                    )
+                    viewModel.onFiltroChange(EstadoSilo.CRITICO)
                     navController.navigate("lista")
                 },
 
-                // Abrir silos de la granja seleccionada
                 onGranjaClick = { granja ->
                     viewModel.onFiltroChange(null)
-
                     navController.navigate(
                         "silosGranja/${Uri.encode(granja)}"
                     )
+                },
+
+                onVerGranjasClick = {
+                    navController.navigate("granjas")
                 }
             )
         }
+
 
         // PANTALLA 3: Lista de granjas
         composable("granjas") {
@@ -286,8 +285,8 @@ fun AppNavigation(
         }
 
         // PANTALLA 5: Listado general de silos
-        composable("lista") {
 
+        composable("lista") {
             SiloListScreen(
                 viewModel = viewModel,
 
@@ -306,6 +305,7 @@ fun AppNavigation(
                 }
             )
         }
+
 
         // PANTALLA 6: Formulario para registrar silos
         composable("formulario") {

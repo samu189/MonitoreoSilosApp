@@ -72,15 +72,16 @@ fun SiloListScreen(
                         color = Color.White
                     )
                 },
+
                 navigationIcon = {
-                    if (granjaSeleccionada != null) {
-                        IconButton(onClick = onVolverClick) {
-                            Icon(
-                                Icons.AutoMirrored.Filled.ArrowBack,
-                                contentDescription = "Volver",
-                                tint = Color.White
-                            )
-                        }
+                    IconButton(
+                        onClick = onVolverClick
+                    ) {
+                        Icon(
+                            imageVector = Icons.AutoMirrored.Filled.ArrowBack,
+                            contentDescription = "Volver",
+                            tint = Color.White
+                        )
                     }
                 },
                 actions = {
