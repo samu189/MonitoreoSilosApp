@@ -44,6 +44,7 @@ import com.example.monitoreossilos.ui.theme.MonitoreosSilosTheme
 import com.example.monitoreossilos.util.NotificationHelper
 
 import com.example.monitoreossilos.ui.LoginScreen
+import com.example.monitoreossilos.ui.HomeScreen
 
 class MainActivity : ComponentActivity() {
 
@@ -181,11 +182,23 @@ fun AppNavigation(
             )
         }
 
+
+        // Pantalla principal de SiloControl
+        composable("inicio") {
+            HomeScreen(
+                viewModel = viewModel,
+                onVerSilosClick = {
+                    navController.navigate("lista")
+                }
+            )
+        }
+
+
         // Pantalla de inicio de sesión
         composable("login") {
             LoginScreen(
                 onLoginSuccess = {
-                    navController.navigate("lista") {
+                    navController.navigate("inicio") {
                         popUpTo("login") {
                             inclusive = true
                         }
@@ -194,6 +207,7 @@ fun AppNavigation(
                 }
             )
         }
+
 
 
         // Pantalla 1: Listado de silos
