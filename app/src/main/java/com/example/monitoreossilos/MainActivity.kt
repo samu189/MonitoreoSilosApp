@@ -3,6 +3,7 @@ package com.example.monitoreossilos
 
 import android.Manifest
 import android.content.pm.PackageManager
+import android.net.Uri
 import android.os.Build
 import android.os.Bundle
 
@@ -33,18 +34,20 @@ import androidx.navigation.navArgument
 import com.example.monitoreossilos.data.AppDatabase
 import com.example.monitoreossilos.data.SiloRepository
 
-import com.example.monitoreossilos.ui.SplashScreen
+import com.example.monitoreossilos.model.EstadoSilo
+
+import com.example.monitoreossilos.ui.GranjaListScreen
+import com.example.monitoreossilos.ui.HomeScreen
+import com.example.monitoreossilos.ui.LoginScreen
 import com.example.monitoreossilos.ui.SiloDetailScreen
 import com.example.monitoreossilos.ui.SiloFormScreen
 import com.example.monitoreossilos.ui.SiloListScreen
 import com.example.monitoreossilos.ui.SiloViewModel
 import com.example.monitoreossilos.ui.SiloViewModelFactory
+import com.example.monitoreossilos.ui.SplashScreen
 
 import com.example.monitoreossilos.ui.theme.MonitoreosSilosTheme
 import com.example.monitoreossilos.util.NotificationHelper
-
-import com.example.monitoreossilos.ui.LoginScreen
-import com.example.monitoreossilos.ui.HomeScreen
 
 class MainActivity : ComponentActivity() {
 
@@ -63,7 +66,7 @@ class MainActivity : ComponentActivity() {
         NotificationHelper(this)
     }
 
-    // ViewModel principal de la aplicación
+    // ViewModel principal
     private val siloViewModel: SiloViewModel by viewModels {
         SiloViewModelFactory(repository)
     }
@@ -77,7 +80,7 @@ class MainActivity : ComponentActivity() {
                 // Permisos de notificaciones
                 SolicitarPermisoNotificaciones()
 
-                // Navegación entre pantallas
+                // Navegación de SiloControl
                 AppNavigation(
                     viewModel = siloViewModel,
                     notificationHelper = notificationHelper
@@ -87,7 +90,7 @@ class MainActivity : ComponentActivity() {
     }
 }
 
-// Solicitar permisos de notificaciones en Android 13+
+// Solicita permiso de notificaciones en Android 13+
 @Composable
 private fun SolicitarPermisoNotificaciones() {
 
@@ -112,7 +115,7 @@ private fun SolicitarPermisoNotificaciones() {
     }
 }
 
-// Navegación principal de la aplicación
+// Navegación principal de SiloControl
 @Composable
 fun AppNavigation(
     viewModel: SiloViewModel,
@@ -121,7 +124,7 @@ fun AppNavigation(
 
     val navController = rememberNavController()
 
-    // Convertir alertas críticas en notificaciones
+    // Convierte alertas críticas en notificaciones
     LaunchedEffect(viewModel, notificationHelper) {
         viewModel.alertas.collect { silo ->
             notificationHelper.enviarAlertaSiloCritico(
@@ -135,17 +138,17 @@ fun AppNavigation(
     NavHost(
         navController = navController,
 
-        // Iniciar con la pantalla de bienvenida
+        // La aplicación comienza en Splash
         startDestination = "splash",
 
-        // Animación al ingresar a una pantalla
+        // Animación al entrar
         enterTransition = {
             slideInHorizontally(
                 animationSpec = tween(300)
             ) { it } + fadeIn(tween(300))
         },
 
-        // Animación al salir de una pantalla
+        // Animación al salir
         exitTransition = {
             slideOutHorizontally(
                 animationSpec = tween(300)
@@ -167,9 +170,9 @@ fun AppNavigation(
 
     ) {
 
-        // Pantalla 0: Bienvenida de SiloControl
-
+        // PANTALLA 0: Splash
         composable("splash") {
+
             SplashScreen(
                 onSplashFinished = {
                     navController.navigate("login") {
@@ -182,20 +185,9 @@ fun AppNavigation(
             )
         }
 
-
-        // Pantalla principal de SiloControl
-        composable("inicio") {
-            HomeScreen(
-                viewModel = viewModel,
-                onVerSilosClick = {
-                    navController.navigate("lista")
-                }
-            )
-        }
-
-
-        // Pantalla de inicio de sesión
+        // PANTALLA 1: Inicio de sesión
         composable("login") {
+
             LoginScreen(
                 onLoginSuccess = {
                     navController.navigate("inicio") {
@@ -208,10 +200,94 @@ fun AppNavigation(
             )
         }
 
+        // PANTALLA 2: Menú principal
+        composable("inicio") {
 
+            HomeScreen(
+                viewModel = viewModel,
 
-        // Pantalla 1: Listado de silos
+                // Abrir todos los silos
+                onVerSilosClick = {
+                    viewModel.onFiltroChange(null)
+                    navController.navigate("lista")
+                },
+
+                // Abrir silos críticos
+                onAlertasClick = {
+                    viewModel.onFiltroChange(
+                        EstadoSilo.CRITICO
+                    )
+                    navController.navigate("lista")
+                },
+
+                // Abrir silos de la granja seleccionada
+                onGranjaClick = { granja ->
+                    viewModel.onFiltroChange(null)
+
+                    navController.navigate(
+                        "silosGranja/${Uri.encode(granja)}"
+                    )
+                }
+            )
+        }
+
+        // PANTALLA 3: Lista de granjas
+        composable("granjas") {
+
+            GranjaListScreen(
+                viewModel = viewModel,
+
+                onGranjaClick = { nombre ->
+                    viewModel.onFiltroChange(null)
+
+                    navController.navigate(
+                        "silosGranja/${Uri.encode(nombre)}"
+                    )
+                },
+
+                onVolverClick = {
+                    navController.popBackStack()
+                }
+            )
+        }
+
+        // PANTALLA 4: Silos de una granja específica
+        composable(
+            route = "silosGranja/{nombre}",
+            arguments = listOf(
+                navArgument("nombre") {
+                    type = NavType.StringType
+                }
+            )
+        ) { entry ->
+
+            val nombre = entry.arguments
+                ?.getString("nombre")
+                ?: return@composable
+
+            SiloListScreen(
+                viewModel = viewModel,
+                granjaSeleccionada = nombre,
+
+                onNuevoSiloClick = {
+                    navController.navigate("formulario")
+                },
+
+                onSiloClick = { id ->
+                    navController.navigate(
+                        "detalle/${Uri.encode(id)}"
+                    )
+                },
+
+                onVolverClick = {
+                    navController.popBackStack()
+                }
+            )
+        }
+
+        // PANTALLA 5: Listado general de silos
         composable("lista") {
+
             SiloListScreen(
                 viewModel = viewModel,
 
@@ -220,13 +296,20 @@ fun AppNavigation(
                 },
 
                 onSiloClick = { id ->
-                    navController.navigate("detalle/$id")
+                    navController.navigate(
+                        "detalle/${Uri.encode(id)}"
+                    )
+                },
+
+                onVolverClick = {
+                    navController.popBackStack()
                 }
             )
         }
 
-        // Pantalla 2: Formulario para registrar silos
+        // PANTALLA 6: Formulario para registrar silos
         composable("formulario") {
+
             SiloFormScreen(
                 viewModel = viewModel,
 
@@ -236,16 +319,14 @@ fun AppNavigation(
             )
         }
 
-        // Pantalla 3: Detalle del silo
+        // PANTALLA 7: Detalle de un silo
         composable(
             route = "detalle/{idSilo}",
-
             arguments = listOf(
                 navArgument("idSilo") {
                     type = NavType.StringType
                 }
             )
-
         ) { entry ->
 
             val id = entry.arguments

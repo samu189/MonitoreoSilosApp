@@ -1,42 +1,25 @@
-
 package com.example.monitoreossilos.ui
-
 import androidx.compose.animation.core.animateIntAsState
 import androidx.compose.animation.core.tween
 import androidx.compose.foundation.horizontalScroll
-import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.PaddingValues
-import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.ArrowBack
+import androidx.compose.material.icons.automirrored.filled.ArrowForward
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.Refresh
-import androidx.compose.material3.Button
-import androidx.compose.material3.Card
-import androidx.compose.material3.CardDefaults
-import androidx.compose.material3.ExperimentalMaterial3Api
-import androidx.compose.material3.FilterChip
-import androidx.compose.material3.FloatingActionButton
-import androidx.compose.material3.Icon
-import androidx.compose.material3.IconButton
-import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Scaffold
-import androidx.compose.material3.Text
-import androidx.compose.material3.TopAppBar
+import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.StrokeCap
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -44,26 +27,61 @@ import com.example.monitoreossilos.model.EstadoSilo
 import com.example.monitoreossilos.model.Silo
 import com.example.monitoreossilos.util.aFechaHora
 import com.example.monitoreossilos.util.aKg
+import com.example.monitoreossilos.ui.theme.AzulPrincipal
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun SiloListScreen(
     viewModel: SiloViewModel,
     onNuevoSiloClick: () -> Unit,
-    onSiloClick: (String) -> Unit
+    onSiloClick: (String) -> Unit,
+    granjaSeleccionada: String? = null,
+    onVolverClick: () -> Unit = {}
 ) {
     val todos by viewModel.silos.collectAsState()
-    val silos by viewModel.silosFiltrados.collectAsState()
+    val filtradosEstado by viewModel.silosFiltrados.collectAsState()
     val filtro by viewModel.filtroEstado.collectAsState()
 
+    // Primero seleccionar los silos de la granja
+    val silosGranja = if (granjaSeleccionada == null) {
+        todos
+    } else {
+        todos.filter {
+            it.granjaNombre == granjaSeleccionada
+        }
+    }
+
+    // Aplicar también el filtro de estado
+    val silosVisibles = if (granjaSeleccionada == null) {
+        filtradosEstado
+    } else {
+        filtradosEstado.filter {
+            it.granjaNombre == granjaSeleccionada
+        }
+    }
+
     Scaffold(
+        containerColor = Color(0xFFEDF2F7),
+
         topBar = {
             TopAppBar(
                 title = {
                     Text(
-                        "Monitoreo de Silos",
-                        fontWeight = FontWeight.Bold
+                        text = granjaSeleccionada ?: "Todos los silos",
+                        fontWeight = FontWeight.Bold,
+                        color = Color.White
                     )
+                },
+                navigationIcon = {
+                    if (granjaSeleccionada != null) {
+                        IconButton(onClick = onVolverClick) {
+                            Icon(
+                                Icons.AutoMirrored.Filled.ArrowBack,
+                                contentDescription = "Volver",
+                                tint = Color.White
+                            )
+                        }
+                    }
                 },
                 actions = {
                     IconButton(
@@ -73,16 +91,22 @@ fun SiloListScreen(
                     ) {
                         Icon(
                             Icons.Default.Refresh,
-                            contentDescription = "Cargar datos de prueba"
+                            contentDescription = "Cargar datos de prueba",
+                            tint = Color.White
                         )
                     }
-                }
+                },
+                colors = TopAppBarDefaults.topAppBarColors(
+                    containerColor = AzulPrincipal
+                )
             )
         },
 
         floatingActionButton = {
             FloatingActionButton(
-                onClick = onNuevoSiloClick
+                onClick = onNuevoSiloClick,
+                containerColor = AzulPrincipal,
+                contentColor = Color.White
             ) {
                 Icon(
                     Icons.Default.Add,
@@ -93,7 +117,6 @@ fun SiloListScreen(
     ) { innerPadding ->
 
         if (todos.isEmpty()) {
-
             Box(
                 modifier = Modifier
                     .fillMaxSize()
@@ -103,13 +126,9 @@ fun SiloListScreen(
                 Column(
                     horizontalAlignment = Alignment.CenterHorizontally
                 ) {
-                    Text(
-                        "No hay registros en la base de datos local"
-                    )
+                    Text("No hay registros en la base de datos local")
 
-                    Spacer(
-                        modifier = Modifier.height(8.dp)
-                    )
+                    Spacer(Modifier.height(12.dp))
 
                     Button(
                         onClick = {
@@ -120,79 +139,83 @@ fun SiloListScreen(
                     }
                 }
             }
-
         } else {
-
             LazyColumn(
                 modifier = Modifier
                     .fillMaxSize()
                     .padding(innerPadding),
-
                 contentPadding = PaddingValues(16.dp),
-
-                verticalArrangement =
-                    Arrangement.spacedBy(12.dp)
+                verticalArrangement = Arrangement.spacedBy(12.dp)
             ) {
 
                 item {
-                    ResumenEstados(todos)
+                    ResumenEstados(silosGranja)
                 }
 
                 item {
                     FiltrosEstado(
-                        filtro,
-                        viewModel::onFiltroChange
+                        filtro = filtro,
+                        onFiltroChange = viewModel::onFiltroChange
                     )
                 }
 
-                if (silos.isEmpty()) {
+                if (granjaSeleccionada != null) {
                     item {
-                        Text("No hay silos con este estado")
-                    }
-                }
-
-                silos.groupBy {
-                    it.granjaNombre
-                }.forEach { (granja, lista) ->
-
-                    item(key = "granja-$granja") {
                         Text(
-                            text = granja,
-                            style = MaterialTheme.typography.titleMedium,
-                            fontWeight = FontWeight.Bold
-                        )
-                    }
-
-                    items(
-                        lista,
-                        key = { it.idSilo }
-                    ) { silo ->
-
-                        SiloCard(
-                            silo = silo,
-                            onClick = {
-                                onSiloClick(silo.idSilo)
-                            }
+                            text = "${silosGranja.size} silos registrados",
+                            color = AzulPrincipal,
+                            fontWeight = FontWeight.SemiBold
                         )
                     }
                 }
+
+                if (silosVisibles.isEmpty()) {
+                    item {
+                        Text(
+                            text = "No hay silos que coincidan con el filtro",
+                            color = Color.Gray
+                        )
+                    }
+                }
+
+                silosVisibles
+                    .groupBy { it.granjaNombre }
+                    .forEach { (granja, lista) ->
+
+                        if (granjaSeleccionada == null) {
+                            item(key = "granja-$granja") {
+                                Text(
+                                    text = granja,
+                                    style = MaterialTheme.typography.titleMedium,
+                                    fontWeight = FontWeight.Bold,
+                                    color = AzulPrincipal
+                                )
+                            }
+                        }
+
+                        items(
+                            items = lista,
+                            key = { it.idSilo }
+                        ) { silo ->
+                            SiloCard(
+                                silo = silo,
+                                onClick = {
+                                    onSiloClick(silo.idSilo)
+                                }
+                            )
+                        }
+                    }
             }
         }
     }
 }
 
-// Resumen de silos por estado
 @Composable
-private fun ResumenEstados(
-    silos: List<Silo>
-) {
+private fun ResumenEstados(silos: List<Silo>) {
     Row(
-        horizontalArrangement =
-            Arrangement.spacedBy(8.dp),
-
-        modifier = Modifier.fillMaxWidth()
+        modifier = Modifier.fillMaxWidth(),
+        horizontalArrangement = Arrangement.spacedBy(8.dp)
     ) {
-
         EstadoSilo.values().forEach { estado ->
 
             val cantidad by animateIntAsState(
@@ -204,27 +227,28 @@ private fun ResumenEstados(
             )
 
             Card(
-                modifier = Modifier.weight(1f)
+                modifier = Modifier.weight(1f),
+                colors = CardDefaults.cardColors(
+                    containerColor = Color.White
+                ),
+                shape = RoundedCornerShape(12.dp)
             ) {
                 Column(
                     modifier = Modifier
                         .fillMaxWidth()
                         .padding(12.dp),
-
-                    horizontalAlignment =
-                        Alignment.CenterHorizontally
+                    horizontalAlignment = Alignment.CenterHorizontally
                 ) {
-
                     Text(
                         text = cantidad.toString(),
-                        fontSize = 28.sp,
+                        fontSize = 26.sp,
                         fontWeight = FontWeight.Bold,
                         color = colorEstado(estado)
                     )
 
                     Text(
                         text = etiquetaEstado(estado),
-                        fontSize = 12.sp
+                        fontSize = 11.sp
                     )
                 }
             }
@@ -232,7 +256,6 @@ private fun ResumenEstados(
     }
 }
 
-// Filtros: todos, normal, advertencia y crítico
 @Composable
 private fun FiltrosEstado(
     filtro: EstadoSilo?,
@@ -242,23 +265,15 @@ private fun FiltrosEstado(
         modifier = Modifier.horizontalScroll(
             rememberScrollState()
         ),
-
-        horizontalArrangement =
-            Arrangement.spacedBy(8.dp)
+        horizontalArrangement = Arrangement.spacedBy(8.dp)
     ) {
-
         FilterChip(
             selected = filtro == null,
-            onClick = {
-                onFiltroChange(null)
-            },
-            label = {
-                Text("Todos")
-            }
+            onClick = { onFiltroChange(null) },
+            label = { Text("Todos") }
         )
 
         EstadoSilo.values().forEach { estado ->
-
             FilterChip(
                 selected = filtro == estado,
                 onClick = {
@@ -272,84 +287,150 @@ private fun FiltrosEstado(
     }
 }
 
-// Tarjeta individual de un silo
+
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun SiloCard(
     silo: Silo,
     onClick: () -> Unit
 ) {
+    val porcentaje = silo.porcentajeDisponible
+        .toFloat()
+        .coerceIn(0f, 100f)
+
+    val colorNivel = when {
+        porcentaje < 20f -> Color(0xFFE53935)
+        porcentaje <= 30f -> Color(0xFFFB8C00)
+        else -> Color(0xFF2E7D32)
+    }
+
     Card(
         onClick = onClick,
-
         modifier = Modifier.fillMaxWidth(),
-
-        elevation = CardDefaults.cardElevation(4.dp)
+        shape = RoundedCornerShape(16.dp),
+        colors = CardDefaults.cardColors(
+            containerColor = Color.White
+        ),
+        elevation = CardDefaults.cardElevation(2.dp)
     ) {
-
         Column(
-            modifier = Modifier.padding(16.dp)
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(16.dp)
         ) {
-
             Row(
                 modifier = Modifier.fillMaxWidth(),
-
-                horizontalArrangement =
-                    Arrangement.SpaceBetween,
-
-                verticalAlignment =
-                    Alignment.CenterVertically
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.spacedBy(14.dp)
             ) {
 
-                Text(
-                    silo.idSilo,
-                    fontWeight = FontWeight.Bold,
-                    fontSize = 18.sp
-                )
+                // Indicador circular del silo
+                Box(
+                    modifier = Modifier.size(82.dp),
+                    contentAlignment = Alignment.Center
+                ) {
+                    CircularProgressIndicator(
+                        progress = { porcentaje / 100f },
+                        modifier = Modifier.size(76.dp),
+                        color = colorNivel,
+                        trackColor = Color(0xFFE2E9ED),
+                        strokeWidth = 9.dp,
+                        strokeCap = StrokeCap.Round
+                    )
 
-                BadgeEstado(silo.estado)
+                    Text(
+                        text = "${porcentaje.toInt()}%",
+                        fontSize = 19.sp,
+                        fontWeight = FontWeight.Bold,
+                        color = Color(0xFF123F70)
+                    )
+                }
+
+                // Información principal del silo
+                Column(
+                    modifier = Modifier.weight(1f),
+                    verticalArrangement = Arrangement.spacedBy(5.dp)
+                ) {
+                    Text(
+                        text = silo.idSilo,
+                        fontWeight = FontWeight.Bold,
+                        fontSize = 17.sp,
+                        color = AzulPrincipal
+                    )
+
+                    Text(
+                        text = silo.tipoAlimento,
+                        fontSize = 13.sp,
+                        color = Color(0xFF37474F)
+                    )
+
+                    BadgeEstado(silo.estado)
+
+                    Text(
+                        text = "Capacidad: ${silo.capacidadTotalKg.aKg()}",
+                        fontSize = 12.sp,
+                        color = Color.DarkGray
+                    )
+
+                    Text(
+                        text = "Disponible: ${silo.nivelActualKg.aKg()}",
+                        fontSize = 12.sp,
+                        color = Color.DarkGray
+                    )
+                }
+
+                // Flecha para abrir el detalle
+                Icon(
+                    imageVector = Icons.AutoMirrored.Filled.ArrowForward,
+                    contentDescription = "Ver detalle del silo",
+                    tint = AzulPrincipal,
+                    modifier = Modifier.size(22.dp)
+                )
             }
 
-            Spacer(
-                modifier = Modifier.height(8.dp)
+            HorizontalDivider(
+                modifier = Modifier.padding(vertical = 12.dp),
+                color = Color(0xFFECEFF1)
             )
 
-            Text(
-                "Alimento: ${silo.tipoAlimento}"
-            )
-
-            Text(
-                "Nivel: ${silo.nivelActualKg.aKg()} / " +
-                        "${silo.capacidadTotalKg.aKg()} " +
-                        "(${"%.1f".format(silo.porcentajeDisponible)}%)"
-            )
-
-            Spacer(
-                modifier = Modifier.height(8.dp)
-            )
-
-            BarraNivel(silo)
-
-            Spacer(
-                modifier = Modifier.height(8.dp)
-            )
-
+            // Información adicional
             Row(
                 modifier = Modifier.fillMaxWidth(),
-
-                horizontalArrangement =
-                    Arrangement.SpaceBetween
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically
             ) {
-
-                Text(
-                    "Act.: ${silo.fechaActualizacion.aFechaHora()}",
-                    fontSize = 12.sp
-                )
-
-                silo.diasRestantes?.let {
+                Column(
+                    modifier = Modifier.weight(1f)
+                ) {
                     Text(
-                        "Quedan ~$it días",
-                        fontSize = 12.sp
+                        text = "Última actualización",
+                        fontSize = 11.sp,
+                        color = Color.Gray
+                    )
+
+                    Text(
+                        text = silo.fechaActualizacion.aFechaHora(),
+                        fontSize = 11.sp,
+                        color = Color(0xFF37474F)
+                    )
+                }
+
+                Column(
+                    horizontalAlignment = Alignment.End
+                ) {
+                    Text(
+                        text = "Tiempo restante",
+                        fontSize = 11.sp,
+                        color = Color.Gray
+                    )
+
+                    Text(
+                        text = silo.diasRestantes?.let {
+                            "Aprox. $it días"
+                        } ?: "Sin estimación",
+                        fontSize = 11.sp,
+                        fontWeight = FontWeight.SemiBold,
+                        color = colorNivel
                     )
                 }
             }
