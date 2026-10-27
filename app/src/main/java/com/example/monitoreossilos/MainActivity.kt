@@ -33,7 +33,6 @@ import androidx.navigation.navArgument
 
 import com.example.monitoreossilos.data.AppDatabase
 import com.example.monitoreossilos.data.SiloRepository
-
 import com.example.monitoreossilos.model.EstadoSilo
 
 import com.example.monitoreossilos.ui.GranjaListScreen
@@ -56,7 +55,7 @@ class MainActivity : ComponentActivity() {
         AppDatabase.getDatabase(this)
     }
 
-    // Repositorio que conecta Room con el ViewModel
+    // Repositorio
     private val repository by lazy {
         SiloRepository(database.siloDao())
     }
@@ -77,10 +76,8 @@ class MainActivity : ComponentActivity() {
         setContent {
             MonitoreosSilosTheme {
 
-                // Permisos de notificaciones
                 SolicitarPermisoNotificaciones()
 
-                // Navegación de SiloControl
                 AppNavigation(
                     viewModel = siloViewModel,
                     notificationHelper = notificationHelper
@@ -90,7 +87,7 @@ class MainActivity : ComponentActivity() {
     }
 }
 
-// Solicita permiso de notificaciones en Android 13+
+// Permiso de notificaciones Android 13+
 @Composable
 private fun SolicitarPermisoNotificaciones() {
 
@@ -115,7 +112,7 @@ private fun SolicitarPermisoNotificaciones() {
     }
 }
 
-// Navegación principal de SiloControl
+// Navegación principal
 @Composable
 fun AppNavigation(
     viewModel: SiloViewModel,
@@ -124,7 +121,7 @@ fun AppNavigation(
 
     val navController = rememberNavController()
 
-    // Convierte alertas críticas en notificaciones
+    // Enviar notificaciones para silos críticos
     LaunchedEffect(viewModel, notificationHelper) {
         viewModel.alertas.collect { silo ->
             notificationHelper.enviarAlertaSiloCritico(
@@ -137,25 +134,20 @@ fun AppNavigation(
 
     NavHost(
         navController = navController,
-
-        // La aplicación comienza en Splash
         startDestination = "splash",
 
-        // Animación al entrar
         enterTransition = {
             slideInHorizontally(
                 animationSpec = tween(300)
             ) { it } + fadeIn(tween(300))
         },
 
-        // Animación al salir
         exitTransition = {
             slideOutHorizontally(
                 animationSpec = tween(300)
             ) { -it / 3 } + fadeOut(tween(300))
         },
 
-        // Animación al retroceder
         popEnterTransition = {
             slideInHorizontally(
                 animationSpec = tween(300)
@@ -172,7 +164,6 @@ fun AppNavigation(
 
         // PANTALLA 0: Splash
         composable("splash") {
-
             SplashScreen(
                 onSplashFinished = {
                     navController.navigate("login") {
@@ -185,9 +176,8 @@ fun AppNavigation(
             )
         }
 
-        // PANTALLA 1: Inicio de sesión
+        // PANTALLA 1: Login
         composable("login") {
-
             LoginScreen(
                 onLoginSuccess = {
                     navController.navigate("inicio") {
@@ -200,8 +190,7 @@ fun AppNavigation(
             )
         }
 
-        // PANTALLA 2: Menú principal
-
+        // PANTALLA 2: Inicio
         composable("inicio") {
             HomeScreen(
                 viewModel = viewModel,
@@ -229,16 +218,13 @@ fun AppNavigation(
             )
         }
 
-
-        // PANTALLA 3: Lista de granjas
+        // PANTALLA 3: Mis Granjas
         composable("granjas") {
-
             GranjaListScreen(
                 viewModel = viewModel,
 
                 onGranjaClick = { nombre ->
                     viewModel.onFiltroChange(null)
-
                     navController.navigate(
                         "silosGranja/${Uri.encode(nombre)}"
                     )
@@ -250,7 +236,7 @@ fun AppNavigation(
             )
         }
 
-        // PANTALLA 4: Silos de una granja específica
+        // PANTALLA 4: Silos de una granja
         composable(
             route = "silosGranja/{nombre}",
             arguments = listOf(
@@ -278,14 +264,19 @@ fun AppNavigation(
                     )
                 },
 
+                // Flecha: regresar a pantalla anterior
                 onVolverClick = {
                     navController.popBackStack()
+                },
+
+                // Casita: regresar directamente a Inicio
+                onInicioClick = {
+                    navController.popBackStack("inicio", false)
                 }
             )
         }
 
-        // PANTALLA 5: Listado general de silos
-
+        // PANTALLA 5: Todos los silos
         composable("lista") {
             SiloListScreen(
                 viewModel = viewModel,
@@ -306,10 +297,8 @@ fun AppNavigation(
             )
         }
 
-
-        // PANTALLA 6: Formulario para registrar silos
+        // PANTALLA 6: Formulario
         composable("formulario") {
-
             SiloFormScreen(
                 viewModel = viewModel,
 
@@ -319,7 +308,7 @@ fun AppNavigation(
             )
         }
 
-        // PANTALLA 7: Detalle de un silo
+        // PANTALLA 7: Detalle del silo
         composable(
             route = "detalle/{idSilo}",
             arguments = listOf(

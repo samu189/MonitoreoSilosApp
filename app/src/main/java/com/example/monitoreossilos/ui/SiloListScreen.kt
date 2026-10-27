@@ -27,6 +27,7 @@ import com.example.monitoreossilos.model.EstadoSilo
 import com.example.monitoreossilos.model.Silo
 import com.example.monitoreossilos.util.aFechaHora
 import com.example.monitoreossilos.util.aKg
+import androidx.compose.material.icons.filled.Home
 import com.example.monitoreossilos.ui.theme.AzulPrincipal
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -36,8 +37,10 @@ fun SiloListScreen(
     onNuevoSiloClick: () -> Unit,
     onSiloClick: (String) -> Unit,
     granjaSeleccionada: String? = null,
-    onVolverClick: () -> Unit = {}
-) {
+    onVolverClick: () -> Unit = {},
+    onInicioClick: () -> Unit = {}
+)
+ {
     val todos by viewModel.silos.collectAsState()
     val filtradosEstado by viewModel.silosFiltrados.collectAsState()
     val filtro by viewModel.filtroEstado.collectAsState()
@@ -85,18 +88,19 @@ fun SiloListScreen(
                     }
                 },
                 actions = {
-                    IconButton(
-                        onClick = {
-                            viewModel.cargarDatosPrueba()
+                    if (granjaSeleccionada != null) {
+                        IconButton(
+                            onClick = onInicioClick
+                        ) {
+                            Icon(
+                                imageVector = Icons.Default.Home,
+                                contentDescription = "Ir al inicio",
+                                tint = Color.White
+                            )
                         }
-                    ) {
-                        Icon(
-                            Icons.Default.Refresh,
-                            contentDescription = "Cargar datos de prueba",
-                            tint = Color.White
-                        )
                     }
                 },
+
                 colors = TopAppBarDefaults.topAppBarColors(
                     containerColor = AzulPrincipal
                 )
