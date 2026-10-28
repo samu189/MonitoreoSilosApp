@@ -3,6 +3,7 @@ package com.example.monitoreossilos
 
 import android.Manifest
 import android.content.pm.PackageManager
+import android.net.Uri
 import android.os.Build
 import android.os.Bundle
 
@@ -32,18 +33,20 @@ import androidx.navigation.navArgument
 
 import com.example.monitoreossilos.data.AppDatabase
 import com.example.monitoreossilos.data.SiloRepository
+import com.example.monitoreossilos.model.EstadoSilo
 
-import com.example.monitoreossilos.ui.SplashScreen
+import com.example.monitoreossilos.ui.GranjaListScreen
+import com.example.monitoreossilos.ui.HomeScreen
+import com.example.monitoreossilos.ui.LoginScreen
 import com.example.monitoreossilos.ui.SiloDetailScreen
 import com.example.monitoreossilos.ui.SiloFormScreen
 import com.example.monitoreossilos.ui.SiloListScreen
 import com.example.monitoreossilos.ui.SiloViewModel
 import com.example.monitoreossilos.ui.SiloViewModelFactory
+import com.example.monitoreossilos.ui.SplashScreen
 
 import com.example.monitoreossilos.ui.theme.MonitoreosSilosTheme
 import com.example.monitoreossilos.util.NotificationHelper
-
-import com.example.monitoreossilos.ui.LoginScreen
 
 class MainActivity : ComponentActivity() {
 
@@ -52,7 +55,7 @@ class MainActivity : ComponentActivity() {
         AppDatabase.getDatabase(this)
     }
 
-    // Repositorio que conecta Room con el ViewModel
+    // Repositorio
     private val repository by lazy {
         SiloRepository(database.siloDao())
     }
@@ -62,7 +65,7 @@ class MainActivity : ComponentActivity() {
         NotificationHelper(this)
     }
 
-    // ViewModel principal de la aplicación
+    // ViewModel principal
     private val siloViewModel: SiloViewModel by viewModels {
         SiloViewModelFactory(repository)
     }
@@ -73,10 +76,8 @@ class MainActivity : ComponentActivity() {
         setContent {
             MonitoreosSilosTheme {
 
-                // Permisos de notificaciones
                 SolicitarPermisoNotificaciones()
 
-                // Navegación entre pantallas
                 AppNavigation(
                     viewModel = siloViewModel,
                     notificationHelper = notificationHelper
@@ -86,7 +87,7 @@ class MainActivity : ComponentActivity() {
     }
 }
 
-// Solicitar permisos de notificaciones en Android 13+
+// Permiso de notificaciones Android 13+
 @Composable
 private fun SolicitarPermisoNotificaciones() {
 
@@ -111,7 +112,7 @@ private fun SolicitarPermisoNotificaciones() {
     }
 }
 
-// Navegación principal de la aplicación
+// Navegación principal
 @Composable
 fun AppNavigation(
     viewModel: SiloViewModel,
@@ -120,7 +121,7 @@ fun AppNavigation(
 
     val navController = rememberNavController()
 
-    // Convertir alertas críticas en notificaciones
+    // Enviar notificaciones para silos críticos
     LaunchedEffect(viewModel, notificationHelper) {
         viewModel.alertas.collect { silo ->
             notificationHelper.enviarAlertaSiloCritico(
@@ -133,25 +134,20 @@ fun AppNavigation(
 
     NavHost(
         navController = navController,
-
-        // Iniciar con la pantalla de bienvenida
         startDestination = "splash",
 
-        // Animación al ingresar a una pantalla
         enterTransition = {
             slideInHorizontally(
                 animationSpec = tween(300)
             ) { it } + fadeIn(tween(300))
         },
 
-        // Animación al salir de una pantalla
         exitTransition = {
             slideOutHorizontally(
                 animationSpec = tween(300)
             ) { -it / 3 } + fadeOut(tween(300))
         },
 
-        // Animación al retroceder
         popEnterTransition = {
             slideInHorizontally(
                 animationSpec = tween(300)
@@ -166,8 +162,7 @@ fun AppNavigation(
 
     ) {
 
-        // Pantalla 0: Bienvenida de SiloControl
-
+        // PANTALLA 0: Splash
         composable("splash") {
             SplashScreen(
                 onSplashFinished = {
@@ -181,11 +176,11 @@ fun AppNavigation(
             )
         }
 
-        // Pantalla de inicio de sesión
+        // PANTALLA 1: Login
         composable("login") {
             LoginScreen(
                 onLoginSuccess = {
-                    navController.navigate("lista") {
+                    navController.navigate("inicio") {
                         popUpTo("login") {
                             inclusive = true
                         }
@@ -195,8 +190,93 @@ fun AppNavigation(
             )
         }
 
+        // PANTALLA 2: Inicio
+        composable("inicio") {
+            HomeScreen(
+                viewModel = viewModel,
 
-        // Pantalla 1: Listado de silos
+                onVerSilosClick = {
+                    viewModel.onFiltroChange(null)
+                    navController.navigate("lista")
+                },
+
+                onAlertasClick = {
+                    viewModel.onFiltroChange(EstadoSilo.CRITICO)
+                    navController.navigate("lista")
+                },
+
+                onGranjaClick = { granja ->
+                    viewModel.onFiltroChange(null)
+                    navController.navigate(
+                        "silosGranja/${Uri.encode(granja)}"
+                    )
+                },
+
+                onVerGranjasClick = {
+                    navController.navigate("granjas")
+                }
+            )
+        }
+
+        // PANTALLA 3: Mis Granjas
+        composable("granjas") {
+            GranjaListScreen(
+                viewModel = viewModel,
+
+                onGranjaClick = { nombre ->
+                    viewModel.onFiltroChange(null)
+                    navController.navigate(
+                        "silosGranja/${Uri.encode(nombre)}"
+                    )
+                },
+
+                onVolverClick = {
+                    navController.popBackStack()
+                }
+            )
+        }
+
+        // PANTALLA 4: Silos de una granja
+        composable(
+            route = "silosGranja/{nombre}",
+            arguments = listOf(
+                navArgument("nombre") {
+                    type = NavType.StringType
+                }
+            )
+        ) { entry ->
+
+            val nombre = entry.arguments
+                ?.getString("nombre")
+                ?: return@composable
+
+            SiloListScreen(
+                viewModel = viewModel,
+                granjaSeleccionada = nombre,
+
+                onNuevoSiloClick = {
+                    navController.navigate("formulario")
+                },
+
+                onSiloClick = { id ->
+                    navController.navigate(
+                        "detalle/${Uri.encode(id)}"
+                    )
+                },
+
+                // Flecha: regresar a pantalla anterior
+                onVolverClick = {
+                    navController.popBackStack()
+                },
+
+                // Casita: regresar directamente a Inicio
+                onInicioClick = {
+                    navController.popBackStack("inicio", false)
+                }
+            )
+        }
+
+        // PANTALLA 5: Todos los silos
         composable("lista") {
             SiloListScreen(
                 viewModel = viewModel,
@@ -206,12 +286,18 @@ fun AppNavigation(
                 },
 
                 onSiloClick = { id ->
-                    navController.navigate("detalle/$id")
+                    navController.navigate(
+                        "detalle/${Uri.encode(id)}"
+                    )
+                },
+
+                onVolverClick = {
+                    navController.popBackStack()
                 }
             )
         }
 
-        // Pantalla 2: Formulario para registrar silos
+        // PANTALLA 6: Formulario
         composable("formulario") {
             SiloFormScreen(
                 viewModel = viewModel,
@@ -222,16 +308,14 @@ fun AppNavigation(
             )
         }
 
-        // Pantalla 3: Detalle del silo
+        // PANTALLA 7: Detalle del silo
         composable(
             route = "detalle/{idSilo}",
-
             arguments = listOf(
                 navArgument("idSilo") {
                     type = NavType.StringType
                 }
             )
-
         ) { entry ->
 
             val id = entry.arguments
