@@ -4,47 +4,28 @@ package com.example.monitoreossilos.ui
 import android.Manifest
 import android.net.Uri
 import android.widget.Toast
+
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
+
 import androidx.compose.animation.AnimatedVisibility
-import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.width
+
+import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
+
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.ArrowDownward
 import androidx.compose.material.icons.filled.ArrowUpward
 import androidx.compose.material.icons.filled.CameraAlt
 import androidx.compose.material.icons.filled.Edit
+import androidx.compose.material.icons.filled.Home
 import androidx.compose.material.icons.filled.Scale
-import androidx.compose.material3.Button
-import androidx.compose.material3.Card
-import androidx.compose.material3.CircularProgressIndicator
-import androidx.compose.material3.ExperimentalMaterial3Api
-import androidx.compose.material3.FilterChip
-import androidx.compose.material3.Icon
-import androidx.compose.material3.IconButton
-import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.OutlinedButton
-import androidx.compose.material3.Scaffold
-import androidx.compose.material3.Text
-import androidx.compose.material3.TopAppBar
-import androidx.compose.runtime.Composable
-import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.runtime.collectAsState
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
-import androidx.compose.runtime.setValue
+
+import androidx.compose.material3.*
+
+import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -54,12 +35,15 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+
 import coil.compose.AsyncImage
+
 import com.example.monitoreossilos.model.EstadoSilo
 import com.example.monitoreossilos.model.Medicion
 import com.example.monitoreossilos.model.Movimiento
 import com.example.monitoreossilos.model.Silo
 import com.example.monitoreossilos.model.TipoMovimiento
+
 import com.example.monitoreossilos.util.CameraHelper
 import com.example.monitoreossilos.util.aFechaHora
 import com.example.monitoreossilos.util.aKg
@@ -69,7 +53,8 @@ import com.example.monitoreossilos.util.aKg
 fun SiloDetailScreen(
     viewModel: SiloViewModel,
     idSilo: String,
-    onVolverClick: () -> Unit
+    onVolverClick: () -> Unit,
+    onInicioClick: () -> Unit
 ) {
     val context = LocalContext.current
 
@@ -94,10 +79,14 @@ fun SiloDetailScreen(
     val tomarFoto = rememberLauncherForActivityResult(
         ActivityResultContracts.TakePicture()
     ) { ok ->
+
         val uri = uriPendiente
 
         if (ok && uri != null) {
-            viewModel.guardarFoto(idSilo, uri.toString())
+            viewModel.guardarFoto(
+                idSilo,
+                uri.toString()
+            )
 
             Toast.makeText(
                 context,
@@ -116,6 +105,7 @@ fun SiloDetailScreen(
     val permisoCamara = rememberLauncherForActivityResult(
         ActivityResultContracts.RequestPermission()
     ) { concedido ->
+
         if (concedido) {
             lanzarCamara()
         } else {
@@ -131,41 +121,67 @@ fun SiloDetailScreen(
         topBar = {
             TopAppBar(
                 title = {
-                    Text(silo?.idSilo ?: "Detalle del silo")
+                    Text(
+                        text = silo?.idSilo ?: "Detalle del silo"
+                    )
                 },
+
+                // Flecha: volver a la pantalla anterior
                 navigationIcon = {
-                    IconButton(onClick = onVolverClick) {
+                    IconButton(
+                        onClick = onVolverClick
+                    ) {
                         Icon(
-                            Icons.AutoMirrored.Filled.ArrowBack,
+                            imageVector =
+                                Icons.AutoMirrored.Filled.ArrowBack,
                             contentDescription = "Volver"
+                        )
+                    }
+                },
+
+                // NUEVO: casita para regresar al Inicio
+                actions = {
+                    IconButton(
+                        onClick = onInicioClick
+                    ) {
+                        Icon(
+                            imageVector = Icons.Default.Home,
+                            contentDescription = "Ir al inicio"
                         )
                     }
                 }
             )
         }
+
     ) { padding ->
 
         val actual = silo
 
         if (actual == null) {
+
             Box(
                 modifier = Modifier
                     .fillMaxSize()
                     .padding(padding),
+
                 contentAlignment = Alignment.Center
             ) {
                 CircularProgressIndicator()
             }
+
         } else {
+
             Column(
                 modifier = Modifier
                     .fillMaxSize()
                     .padding(padding)
                     .padding(16.dp)
                     .verticalScroll(rememberScrollState()),
+
                 verticalArrangement = Arrangement.spacedBy(16.dp)
             ) {
 
+                // Información general del silo
                 ResumenSilo(actual)
 
                 // Registro fotográfico
@@ -174,9 +190,11 @@ fun SiloDetailScreen(
                 ) {
                     Column(
                         modifier = Modifier.padding(16.dp),
+
                         verticalArrangement =
                             Arrangement.spacedBy(8.dp)
                     ) {
+
                         Text(
                             "Registro fotográfico",
                             fontWeight = FontWeight.Bold
@@ -187,18 +205,24 @@ fun SiloDetailScreen(
                         ) {
                             AsyncImage(
                                 model = actual.fotoUri,
+
                                 contentDescription =
                                     "Foto del silo ${actual.idSilo}",
+
                                 contentScale = ContentScale.Crop,
+
                                 modifier = Modifier
                                     .fillMaxWidth()
                                     .height(200.dp)
-                                    .clip(MaterialTheme.shapes.medium)
+                                    .clip(
+                                        MaterialTheme.shapes.medium
+                                    )
                             )
                         }
 
                         OutlinedButton(
                             onClick = {
+
                                 if (cameraHelper.tienePermisoCamara()) {
                                     lanzarCamara()
                                 } else {
@@ -207,6 +231,7 @@ fun SiloDetailScreen(
                                     )
                                 }
                             },
+
                             modifier = Modifier.fillMaxWidth()
                         ) {
                             Icon(
@@ -214,13 +239,16 @@ fun SiloDetailScreen(
                                 contentDescription = null
                             )
 
-                            Spacer(Modifier.width(8.dp))
+                            Spacer(
+                                Modifier.width(8.dp)
+                            )
 
                             Text(
-                                if (actual.fotoUri == null)
+                                if (actual.fotoUri == null) {
                                     "Tomar foto de inspección"
-                                else
+                                } else {
                                     "Reemplazar foto"
+                                }
                             )
                         }
                     }
@@ -232,9 +260,11 @@ fun SiloDetailScreen(
                 ) {
                     Column(
                         modifier = Modifier.padding(16.dp),
+
                         verticalArrangement =
                             Arrangement.spacedBy(8.dp)
                     ) {
+
                         Text(
                             "Registrar movimiento",
                             fontWeight = FontWeight.Bold
@@ -244,17 +274,21 @@ fun SiloDetailScreen(
                             horizontalArrangement =
                                 Arrangement.spacedBy(8.dp)
                         ) {
+
                             FilterChip(
                                 selected =
                                     movForm.tipo == TipoMovimiento.CARGA,
+
                                 onClick = {
                                     viewModel.onTipoMovimientoChange(
                                         TipoMovimiento.CARGA
                                     )
                                 },
+
                                 label = {
                                     Text("Carga")
                                 },
+
                                 leadingIcon = {
                                     Icon(
                                         Icons.Default.ArrowUpward,
@@ -266,14 +300,17 @@ fun SiloDetailScreen(
                             FilterChip(
                                 selected =
                                     movForm.tipo == TipoMovimiento.DESCARGA,
+
                                 onClick = {
                                     viewModel.onTipoMovimientoChange(
                                         TipoMovimiento.DESCARGA
                                     )
                                 },
+
                                 label = {
                                     Text("Descarga")
                                 },
+
                                 leadingIcon = {
                                     Icon(
                                         Icons.Default.ArrowDownward,
@@ -285,7 +322,9 @@ fun SiloDetailScreen(
 
                         CampoValidado(
                             value = movForm.cantidad,
-                            onValueChange = viewModel::onCantidadChange,
+                            onValueChange =
+                                viewModel::onCantidadChange,
+
                             label = "Cantidad (kg)",
                             icono = Icons.Default.Scale,
                             error = movForm.errorCantidad,
@@ -294,7 +333,9 @@ fun SiloDetailScreen(
 
                         CampoValidado(
                             value = movForm.observacion,
-                            onValueChange = viewModel::onObservacionChange,
+                            onValueChange =
+                                viewModel::onObservacionChange,
+
                             label = "Observación (opcional)",
                             icono = Icons.Default.Edit,
                             error = null,
@@ -303,6 +344,7 @@ fun SiloDetailScreen(
 
                         Button(
                             onClick = {
+
                                 if (viewModel.registrarMovimiento()) {
                                     Toast.makeText(
                                         context,
@@ -311,6 +353,7 @@ fun SiloDetailScreen(
                                     ).show()
                                 }
                             },
+
                             modifier = Modifier.fillMaxWidth()
                         ) {
                             Text("Registrar movimiento")
@@ -324,9 +367,11 @@ fun SiloDetailScreen(
                 ) {
                     Column(
                         modifier = Modifier.padding(16.dp),
+
                         verticalArrangement =
                             Arrangement.spacedBy(8.dp)
                     ) {
+
                         Text(
                             "Últimos movimientos",
                             fontWeight = FontWeight.Bold
@@ -351,9 +396,11 @@ fun SiloDetailScreen(
                 ) {
                     Column(
                         modifier = Modifier.padding(16.dp),
+
                         verticalArrangement =
                             Arrangement.spacedBy(8.dp)
                     ) {
+
                         Text(
                             "Historial de niveles",
                             fontWeight = FontWeight.Bold
@@ -382,20 +429,27 @@ fun SiloDetailScreen(
 // Información general del silo
 @Composable
 private fun ResumenSilo(silo: Silo) {
+
     Card(
         modifier = Modifier.fillMaxWidth()
     ) {
         Column(
             modifier = Modifier.padding(16.dp),
-            verticalArrangement = Arrangement.spacedBy(6.dp)
+
+            verticalArrangement =
+                Arrangement.spacedBy(6.dp)
         ) {
+
             Row(
                 modifier = Modifier.fillMaxWidth(),
+
                 horizontalArrangement =
                     Arrangement.SpaceBetween,
+
                 verticalAlignment =
                     Alignment.CenterVertically
             ) {
+
                 Text(
                     silo.granjaNombre,
                     fontWeight = FontWeight.Bold,
@@ -405,7 +459,9 @@ private fun ResumenSilo(silo: Silo) {
                 BadgeEstado(silo.estado)
             }
 
-            Text("Alimento: ${silo.tipoAlimento}")
+            Text(
+                "Alimento: ${silo.tipoAlimento}"
+            )
 
             BarraNivel(silo)
 
@@ -428,7 +484,9 @@ private fun ResumenSilo(silo: Silo) {
             )
 
             silo.diasRestantes?.let {
-                Text("Días restantes estimados: $it")
+                Text(
+                    "Días restantes estimados: $it"
+                )
             }
 
             Text(
@@ -441,21 +499,26 @@ private fun ResumenSilo(silo: Silo) {
     }
 }
 
-// Fila de carga o descarga
+// Fila del historial de cargas y descargas
 @Composable
 private fun FilaMovimiento(m: Movimiento) {
-    val esCarga = m.tipo == TipoMovimiento.CARGA
+
+    val esCarga =
+        m.tipo == TipoMovimiento.CARGA
 
     Row(
         verticalAlignment = Alignment.CenterVertically
     ) {
+
         Icon(
             imageVector = if (esCarga) {
                 Icons.Default.ArrowUpward
             } else {
                 Icons.Default.ArrowDownward
             },
+
             contentDescription = null,
+
             tint = if (esCarga) {
                 colorEstado(EstadoSilo.NORMAL)
             } else {
@@ -463,9 +526,12 @@ private fun FilaMovimiento(m: Movimiento) {
             }
         )
 
-        Spacer(Modifier.width(8.dp))
+        Spacer(
+            Modifier.width(8.dp)
+        )
 
         Column {
+
             Text(
                 "${if (esCarga) "Carga" else "Descarga"}: ${
                     m.cantidadKg.aKg()
@@ -479,6 +545,7 @@ private fun FilaMovimiento(m: Movimiento) {
                         } else {
                             ""
                         },
+
                 fontSize = 12.sp
             )
         }
@@ -491,6 +558,7 @@ private fun FilaMedicion(
     m: Medicion,
     capacidad: Double
 ) {
+
     val porcentaje = if (capacidad > 0) {
         m.nivelKg / capacidad * 100
     } else {
@@ -499,9 +567,11 @@ private fun FilaMedicion(
 
     Row(
         modifier = Modifier.fillMaxWidth(),
+
         horizontalArrangement =
             Arrangement.SpaceBetween
     ) {
+
         Text(
             m.fecha.aFechaHora(),
             fontSize = 13.sp
@@ -511,6 +581,7 @@ private fun FilaMedicion(
             "${m.nivelKg.aKg()} (${
                 "%.0f".format(porcentaje)
             }%)",
+
             fontSize = 13.sp
         )
     }
