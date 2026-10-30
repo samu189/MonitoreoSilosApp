@@ -1,4 +1,3 @@
-
 package com.example.monitoreossilos
 
 import android.Manifest
@@ -47,6 +46,7 @@ import com.example.monitoreossilos.ui.SplashScreen
 
 import com.example.monitoreossilos.ui.theme.MonitoreosSilosTheme
 import com.example.monitoreossilos.util.NotificationHelper
+import com.example.monitoreossilos.ui.AlertasScreen
 
 class MainActivity : ComponentActivity() {
 
@@ -201,8 +201,7 @@ fun AppNavigation(
                 },
 
                 onAlertasClick = {
-                    viewModel.onFiltroChange(EstadoSilo.CRITICO)
-                    navController.navigate("lista")
+                    navController.navigate("alertas")
                 },
 
                 onGranjaClick = { granja ->
@@ -217,6 +216,28 @@ fun AppNavigation(
                 }
             )
         }
+
+        // PANTALLA: Alertas y notificaciones
+        composable("alertas") {
+            AlertasScreen(
+                viewModel = viewModel,
+
+                onVolverClick = {
+                    navController.popBackStack()
+                },
+
+                onInicioClick = {
+                    navController.popBackStack("inicio", false)
+                },
+
+                onSiloClick = { id ->
+                    navController.navigate(
+                        "detalle/${Uri.encode(id)}"
+                    )
+                }
+            )
+        }
+
 
         // PANTALLA 3: Mis Granjas
         composable("granjas") {
@@ -322,14 +343,21 @@ fun AppNavigation(
                 ?.getString("idSilo")
                 ?: return@composable
 
+
             SiloDetailScreen(
                 viewModel = viewModel,
                 idSilo = id,
 
                 onVolverClick = {
                     navController.popBackStack()
+                },
+
+                onInicioClick = {
+                    navController.popBackStack("inicio", false)
                 }
             )
+
+        }
+
         }
     }
-}
