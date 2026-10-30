@@ -1,4 +1,3 @@
-
 package com.example.monitoreossilos.ui
 
 import androidx.compose.foundation.Canvas
@@ -47,6 +46,7 @@ fun HomeScreen(
     viewModel: SiloViewModel,
     onVerSilosClick: () -> Unit,
     onAlertasClick: () -> Unit,
+    onPerfilClick: () -> Unit = {},
     onGranjaClick: (String) -> Unit,
     onVerGranjasClick: () -> Unit
 ) {
@@ -173,11 +173,10 @@ fun HomeScreen(
                     }
                 )
 
-                // Perfil pendiente de implementar
+                // Perfil
                 NavigationBarItem(
                     selected = false,
-                    enabled = false,
-                    onClick = {},
+                    onClick = onPerfilClick,
                     icon = {
                         Icon(
                             Icons.Default.Person,
@@ -237,7 +236,6 @@ fun HomeScreen(
                     horizontalArrangement = Arrangement.spacedBy(10.dp)
                 ) {
 
-                    // Tarjeta Granjas - AHORA ES FUNCIONAL
                     TarjetaResumen(
                         titulo = "Granjas",
                         cantidad = granjas.size,
@@ -260,7 +258,6 @@ fun HomeScreen(
                         }
                     )
 
-                    // Tarjeta Silos
                     TarjetaResumen(
                         titulo = "Silos",
                         cantidad = silos.size,
@@ -387,7 +384,7 @@ fun HomeScreen(
                                     .clip(RoundedCornerShape(10.dp)),
 
                                 color = AzulPrincipal,
-                                trackColor = Color(0xFFE0EBF2)
+                                trackColor = Color(0xFFE0E0E0)
                             )
 
                             Spacer(
@@ -446,7 +443,6 @@ fun HomeScreen(
                         color = AzulTexto
                     )
 
-                    // NUEVO: botón para abrir Mis Granjas
                     TextButton(
                         onClick = onVerGranjasClick
                     ) {
@@ -500,7 +496,6 @@ fun HomeScreen(
                         verticalAlignment = Alignment.CenterVertically
                     ) {
 
-                        // Icono de la granja
                         Box(
                             modifier = Modifier
                                 .size(46.dp)
@@ -564,7 +559,6 @@ fun HomeScreen(
     }
 }
 
-// Tarjetas de resumen con degradado y clic opcional
 @Composable
 private fun TarjetaResumen(
     titulo: String,
@@ -622,7 +616,6 @@ private fun TarjetaResumen(
     }
 }
 
-// Indicador circular del nivel promedio
 @Composable
 private fun IndicadorCircular(
     porcentaje: Int,
@@ -653,7 +646,7 @@ private fun IndicadorCircular(
             drawArc(
                 color = Color(0xFF1682D7),
                 startAngle = -90f,
-                sweepAngle = 360f * valor / 100f,
+                sweepAngle = 360f * (valor / 100f),
                 useCenter = false,
                 style = Stroke(
                     width = ancho,

@@ -34,9 +34,11 @@ import com.example.monitoreossilos.data.AppDatabase
 import com.example.monitoreossilos.data.SiloRepository
 import com.example.monitoreossilos.model.EstadoSilo
 
+import com.example.monitoreossilos.ui.AlertasScreen
 import com.example.monitoreossilos.ui.GranjaListScreen
 import com.example.monitoreossilos.ui.HomeScreen
 import com.example.monitoreossilos.ui.LoginScreen
+import com.example.monitoreossilos.ui.PerfilScreen
 import com.example.monitoreossilos.ui.SiloDetailScreen
 import com.example.monitoreossilos.ui.SiloFormScreen
 import com.example.monitoreossilos.ui.SiloListScreen
@@ -46,7 +48,6 @@ import com.example.monitoreossilos.ui.SplashScreen
 
 import com.example.monitoreossilos.ui.theme.MonitoreosSilosTheme
 import com.example.monitoreossilos.util.NotificationHelper
-import com.example.monitoreossilos.ui.AlertasScreen
 
 class MainActivity : ComponentActivity() {
 
@@ -204,6 +205,10 @@ fun AppNavigation(
                     navController.navigate("alertas")
                 },
 
+                onPerfilClick = {
+                    navController.navigate("perfil")
+                },
+
                 onGranjaClick = { granja ->
                     viewModel.onFiltroChange(null)
                     navController.navigate(
@@ -237,7 +242,6 @@ fun AppNavigation(
                 }
             )
         }
-
 
         // PANTALLA 3: Mis Granjas
         composable("granjas") {
@@ -285,12 +289,10 @@ fun AppNavigation(
                     )
                 },
 
-                // Flecha: regresar a pantalla anterior
                 onVolverClick = {
                     navController.popBackStack()
                 },
 
-                // Casita: regresar directamente a Inicio
                 onInicioClick = {
                     navController.popBackStack("inicio", false)
                 }
@@ -343,7 +345,6 @@ fun AppNavigation(
                 ?.getString("idSilo")
                 ?: return@composable
 
-
             SiloDetailScreen(
                 viewModel = viewModel,
                 idSilo = id,
@@ -356,8 +357,22 @@ fun AppNavigation(
                     navController.popBackStack("inicio", false)
                 }
             )
-
         }
 
+        // PANTALLA 8: Perfil
+        composable("perfil") {
+            PerfilScreen(
+                onVolverClick = {
+                    navController.popBackStack()
+                },
+                onLogoutClick = {
+                    navController.navigate("login") {
+                        popUpTo(0) { inclusive = true }
+                        launchSingleTop = true
+                    }
+                }
+            )
         }
+
     }
+}
