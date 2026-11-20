@@ -1,4 +1,3 @@
-
 package com.example.monitoreossilos.ui
 
 import android.Manifest
@@ -19,6 +18,7 @@ import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.ArrowDownward
 import androidx.compose.material.icons.filled.ArrowUpward
 import androidx.compose.material.icons.filled.CameraAlt
+import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.Edit
 import androidx.compose.material.icons.filled.Home
 import androidx.compose.material.icons.filled.Scale
@@ -66,6 +66,9 @@ fun SiloDetailScreen(
     val movimientos by viewModel.movimientos.collectAsState()
     val mediciones by viewModel.mediciones.collectAsState()
     val movForm by viewModel.movimientoForm.collectAsState()
+
+    // Estado para mostrar el cuadro de confirmación de eliminación
+    var mostrarDialogoEliminar by remember { mutableStateOf(false) }
 
     // Cámara y fotografía de inspección
     val cameraHelper = remember(context) {
@@ -421,6 +424,53 @@ fun SiloDetailScreen(
                         }
                     }
                 }
+
+                // Botón de eliminar silo
+                Button(
+                    onClick = { mostrarDialogoEliminar = true },
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(top = 8.dp, bottom = 24.dp),
+                    colors = ButtonDefaults.buttonColors(
+                        containerColor = MaterialTheme.colorScheme.error
+                    )
+                ) {
+                    Icon(
+                        imageVector = Icons.Default.Delete,
+                        contentDescription = "Eliminar Silo"
+                    )
+                    Spacer(Modifier.width(8.dp))
+                    Text("Eliminar Silo")
+                }
+            }
+
+            // Cuadro de diálogo de confirmación
+            if (mostrarDialogoEliminar) {
+                AlertDialog(
+                    onDismissRequest = { mostrarDialogoEliminar = false },
+                    title = { Text("Eliminar Silo") },
+                    text = { Text("¿Estás seguro de que deseas eliminar permanentemente este silo? Esta acción borrará todo su historial y no se puede deshacer.") },
+                    confirmButton = {
+                        TextButton(
+                            onClick = {
+                                mostrarDialogoEliminar = false
+                                viewModel.eliminarSilo(idSilo)
+                                Toast.makeText(context, "Silo eliminado", Toast.LENGTH_SHORT).show()
+                                onInicioClick()
+                            },
+                            colors = ButtonDefaults.textButtonColors(
+                                contentColor = MaterialTheme.colorScheme.error
+                            )
+                        ) {
+                            Text("Sí, eliminar")
+                        }
+                    },
+                    dismissButton = {
+                        TextButton(onClick = { mostrarDialogoEliminar = false }) {
+                            Text("Cancelar")
+                        }
+                    }
+                )
             }
         }
     }

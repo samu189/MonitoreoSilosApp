@@ -20,8 +20,12 @@ import androidx.compose.material.icons.filled.Warehouse
 import androidx.compose.material3.*
 
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -36,6 +40,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 
 import com.example.monitoreossilos.ui.theme.AzulPrincipal
+import com.example.monitoreossilos.network.WeatherClient
 
 private val AzulFuerte = Color(0xFF0864AD)
 private val AzulTexto = Color(0xFF123F70)
@@ -227,6 +232,11 @@ fun HomeScreen(
                         fontSize = 14.sp
                     )
                 }
+            }
+
+            // Tarjeta del Clima (Agregada para la Misión 2)
+            item {
+                TarjetaClimaPlanta()
             }
 
             // Primera fila: Granjas y Silos
@@ -661,5 +671,35 @@ private fun IndicadorCircular(
             fontWeight = FontWeight.Bold,
             fontSize = 23.sp
         )
+    }
+}
+
+// Nueva función de la API del Clima
+@Composable
+fun TarjetaClimaPlanta() {
+    var texto by remember { mutableStateOf("Cargando clima...") }
+
+    LaunchedEffect(Unit) {
+        texto = try {
+            val clima = WeatherClient.api.obtenerClimaMelipilla().current_weather
+            "${clima.temperature} °C | Viento: ${clima.windspeed} km/h"
+        } catch (e: Exception) {
+            "Clima no disponible"
+        }
+    }
+
+    Card(
+        modifier = Modifier.fillMaxWidth(),
+        colors = CardDefaults.cardColors(
+            containerColor = MaterialTheme.colorScheme.secondaryContainer
+        )
+    ) {
+        Row(
+            modifier = Modifier.padding(16.dp).fillMaxWidth(),
+            horizontalArrangement = Arrangement.SpaceBetween
+        ) {
+            Text("Clima Planta Melipilla", style = MaterialTheme.typography.titleSmall)
+            Text(texto, style = MaterialTheme.typography.bodyMedium)
+        }
     }
 }

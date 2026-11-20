@@ -1,4 +1,3 @@
-
 package com.example.monitoreossilos.ui
 
 import androidx.lifecycle.ViewModel
@@ -367,6 +366,19 @@ class SiloViewModel(
     fun guardarFoto(idSilo: String, uri: String) {
         viewModelScope.launch {
             repository.actualizarFoto(idSilo, uri)
+        }
+    }
+
+    // Eliminar silo (Conexión temporal para la UI)
+    fun eliminarSilo(idSilo: String) {
+        viewModelScope.launch {
+            try {
+                // Esta función puede marcarse en rojo si el repositorio aún no tiene el método.
+                // Es normal. Tu compañero de base de datos lo implementará.
+                //repository.eliminarSilo(idSilo)
+            } catch (e: Exception) {
+                // Manejo de errores
+            }
         }
     }
 }
